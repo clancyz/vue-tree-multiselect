@@ -249,6 +249,7 @@ export default {
             this.getSelectedText();
         },
         checkSiblings(item, selected) {
+            let me = this;
             let currentLevelData = this.showData[item.level] ? this.showData[item.level] : undefined;
             if (!currentLevelData) return;
             if (item.key.indexOf('all-part') >= 0) {
@@ -259,17 +260,22 @@ export default {
                     }
                 })
             } else {
+              // 选择为root的情况
                 currentLevelData.forEach((v) => {
                     v.selected = selected;
                     v.partSelected = false;
-                    // TODO 下钻
-                    this.showData[v.level + 1] && this.showData[v.level + 1].forEach((v) => {
-                        v.selected = selected;
-                    })
+                    let level = v.level;
+                    while (level < me.showData.length) {
+                      me.showData[level + 1] && me.showData[level + 1].forEach((v) => {
+                          v.selected = selected;
+                      })
+                      level++;
+                    }
                 })
             }
         },
         checkPartRoot(item, selected) {
+            debugger
             let allPartSelected = false;
             let allPartNonSelected = false;
             let allPartRootKey = 'all-part-' + item.parentKey;
@@ -280,47 +286,65 @@ export default {
                 return v.parentKey === item.parentKey && v.key !== allPartRootKey;
             });
             let selectedCount = partData.filter((v) => v.selected).length;
+            let partSelectedCount = partData.filter((v) => v.partSelected).length;
             allPartSelected = selectedCount === partData.length ? true : false;
             allPartNonSelected = selectedCount === 0 ? true : false;
-            if (selectedCount > 0) {
-                if (allPartSelected) {
+
+            // 如果有部分选中的，那么root一定是部分选中的
+            if (partSelectedCount > 0) {
+              this.showData[item.level].every((v) => {
+                  if (v.key === allPartRootKey) {
+                      v.selected = false;
+                      v.partSelected = true;
+                      return false;
+                  }
+                  return true;
+              })
+            } else {
+                if (selectedCount > 0) {
+                    if (allPartSelected) {
+                        this.showData[item.level].every((v) => {
+                            if (v.key === allPartRootKey) {
+                                v.selected = true;
+                                v.partSelected = false;
+                                return false;
+                            }
+                            return true;
+                        })
+                    } else {
+                        this.showData[item.level].forEach((v) => {
+                            if (v.key === allPartRootKey) {
+                                v.selected = false;
+                                v.partSelected = true;
+                                return false;
+                            }
+                            return true;
+                        })
+                    }
+                }
+
+                if (allPartNonSelected) {
                     this.showData[item.level].every((v) => {
+                        // if (v.key.indexOf('all-part') >= 0 || v.key === 'all-root') {
                         if (v.key === allPartRootKey) {
-                            v.selected = true;
-                            v.partSelected = false;
-                            return false;
-                        }
-                        return true;
-                    })
-                } else {
-                    this.showData[item.level].forEach((v) => {
-                        if (v.key === allPartRootKey) {
+
                             v.selected = false;
-                            v.partSelected = true;
+                            v.partSelected = false;
                             return false;
                         }
                         return true;
                     })
                 }
             }
-            if (allPartNonSelected) {
-                this.showData[item.level].every((v) => {
-                    if (v.key.indexOf('all-part') >= 0 || v.key === 'all-root') {
-                        v.selected = false;
-                        v.partSelected = false;
-                        return false;
-                    }
-                    return true;
-                })
-            }
         },
         checkNext(item, selected) {
+            let me = this;
             let nextLevelData = this.showData[item.level + 1] ? this.showData[item.level + 1] : undefined;
             if (!nextLevelData) return;
             nextLevelData.forEach((v) => {
                 v.selected = (v.parentKey === item.key) ? selected : v.selected;
-                if (this.showData[v.level + 1]) {
-                    this.checkNext(v);
+                if (me.showData[v.level + 1]) {
+                    me.checkNext(v, v.selected);
                 }
             })
         },
@@ -329,16 +353,25 @@ export default {
             if (!parentLevelData) return;
             // check if current selected items is ALL-SELECTED or ALL-NON-SELECTED
             let allSelected = false;
+            let allNonSelected = false;
             if (item.key.indexOf('all-root') >= 0 || item.key.indexOf('all-part') >= 0) {
                 allSelected = true;
             } else {
-                if (this.showData[item.level].every((v) => {
-                        return !(v.parentKey === item.parentKey && v.selected !== selected)
+                debugger;
+                let currentPartData = this.showData[item.level].filter((v) => v.parentKey === item.parentKey);
+                if (currentPartData.every((v) => {
+                        return v.selected && !v.partSelected
                     })) {
                     allSelected = true;
                 }
-            }
+                if (currentPartData.every((v) => {
+                        return !v.selected && !v.partSelected
+                    })) {
+                    allNonSelected = true;
+                }
 
+            }
+            debugger;
             if (item.key.indexOf('all-root') >= 0) {
                 parentLevelData.forEach((v) => {
                     v.selected = selected;
@@ -347,11 +380,20 @@ export default {
             } else {
                 parentLevelData.forEach((v) => {
                     if (v.key === item.parentKey) {
-                        v.selected = (allSelected && selected) ? true : false;
-                        v.partSelected = (allSelected && !selected) ? false : true;
+                        if (allNonSelected) {
+                          v.selected = false;
+                          v.partSelected = false;
+                        } else {
+                          v.selected = (allSelected && selected) ? true : false;
+                          if (v.selected) {
+                            v.partSelected = false;
+                          } else {
+                            v.partSelected = (allSelected && !selected) ? false : true;
+                          }
+                        }
                         this.checkPartRoot(v, v.selected);
+                        this.checkParent(v, v.selected);
                     }
-                    this.checkParent(v, selected);
                 })
             }
         },
