@@ -3,7 +3,7 @@
     <pre>
       v-tree-multiselect v-ref:abc :init-data="treeData" level-text="大区,城市,区域" level-key="region_list,city_list,area_list"
     </pre>
-    <v-tree-multiselect v-ref:abc :init-data="treeData" level-text="大区,城市,区域" level-key="region_list,city_list,area_list"></v-tree-multiselect>
+    <v-tree-multiselect v-ref:abc :init-data="treeData" level-text="城市,城市大区,区域,商圈" level-key="city_list,zone_list,area_list,aoi_list"></v-tree-multiselect>
   </div>
   <div id="result" style="float:right; width:500px;word-break: break-all">
     {{resultData}}
@@ -88,6 +88,59 @@
                    ]
                }
            };
+           json = {
+"errno": 0,
+"errmsg": "",
+"req_params": [ ],
+"data": {
+    "city_list": [
+    {
+        "key": "289",
+        "text": "上海",
+        "zone_list": [
+        {
+            "key": "1742501060",
+            "text": "中部战区苏左右",
+            "area_list":[
+                {
+                    "key": "2216245636906655817",
+                    "text": "雷霆团",
+                    "aoi_list":[
+                       {
+                           "key": "7368973776153071478",
+                           "text": "上海火车站"
+                       }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "1742501061",
+            "text": "北部战区范长瑞",
+            "area_list":[
+                {
+                    "key": "2862911683296300309",
+                    "text": "勇士团",
+                    "aoi_list":[
+                       {
+                           "key": "2733068057085264425",
+                           "text": "嘉定北"
+                       },
+                       {
+                           "key": "2733068052385264425",
+                           "text": "嘉定南"
+                       }
+                    ]
+                }
+            ]
+        }
+        ]
+    }
+
+        ]
+}
+};
+
            this.$set('treeData',  json.data);
        }
    }

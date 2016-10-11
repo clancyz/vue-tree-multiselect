@@ -229,11 +229,15 @@ export default {
                 v.active = false;
             })
             item.active = true;
-            let nextLevelData = this.showData[item.level + 1] ? this.showData[item.level + 1] : undefined;
-            if (!nextLevelData) return;
-            nextLevelData.forEach((v) => {
-                v.parentActive = (v.parentKey === item.key) ? true : false;
-            })
+            let level = item.level + 1;
+            while(true) {
+                let nextLevelData = this.showData[level] ? this.showData[level] : undefined;
+                if (!nextLevelData) return;
+                nextLevelData.forEach((v) => {
+                    v.parentActive = (v.parentKey === item.key) ? true : false;
+                })
+                level++;
+            }
         },
         checkItem(item) {
             if (this.disabled && !this.firstInit) return;
